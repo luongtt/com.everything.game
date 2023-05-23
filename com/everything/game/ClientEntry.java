@@ -1,0 +1,140 @@
+package com.everything.game;
+
+import java.net.Socket;
+import java.util.ArrayList;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
+public class ClientEntry {
+    public Socket sc;
+    public DataInputStream dis;
+    public DataOutputStream dos;
+    public int id;
+    protected boolean connected;
+    private IMessageListener messageListenerHandle;
+    private Thread msgListenThread;
+    protected Thread msgSendThread;
+    protected MessageSender msgSender;
+    protected ICrypto crypto;
+
+    protected class MessageSender implements Runnable {
+        private final ArrayList<Message> sendingMessage;
+
+        public MessageSender() {
+            sendingMessage = new ArrayList<>();
+        }
+
+        public void AddMessage(Message message) {
+            sendingMessage.add(message);
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (isConnected()) {
+                    while (sendingMessage.size() > 0) {
+                        Message m = sendingMessage.get(0);
+                        doSendMessage(m);
+                        sendingMessage.remove(0);
+                    }
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {}
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    protected class MessageListener implements Runnable {
+        @Override
+        public void run() {
+            try {
+                while (true) {
+                    Message message = doGetMessage();
+                    if (message != null) {
+                        messageListenerHandle.onMessage(message);
+                        message.cleanup();
+                    } else
+                        break;
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            System.out.println("Error read message from client " + ClientEntry.this);
+            if (isConnected()) {
+                if (messageListenerHandle != null) {
+                    messageListenerHandle.onDisconnected();
+                }
+                close();
+            }
+        }
+    }
+
+    public ClientEntry(Socket sc, int id) throws IOException {
+        this.sc = sc;
+        this.id = id;
+        msgListenThread = new Thread(new MessageListener());
+        msgListenThread.start();
+        msgSendThread = new Thread(msgSender = new MessageSender());
+    }
+
+    public boolean isConnected() {
+        return connected;
+    }
+
+    public void setMessageListenerHandle(IMessageListener messageListener) {
+        this.messageListenerHandle = messageListener;
+    }
+
+    public void setCrypto(ICrypto crypto) {
+        this.crypto = crypto;
+    }
+
+    public void sendMessage(Message msg) {
+        this.msgSender.AddMessage(msg);
+    }
+
+    protected synchronized void doSendMessage(Message m) throws Exception {}
+    protected synchronized Message doGetMessage() {
+        return null;
+    }
+
+    public void close() {
+        cleanNetwork();
+    }
+
+    private void cleanNetwork() {
+        this.crypto.refresh();
+        try {
+            connected = false;
+            if (sc != null) {
+                sc.close();
+                sc = null;
+            }
+            if (dos != null) {
+                dos.close();
+                dos = null;
+            }
+            if (dis != null) {
+                dis.close();
+                dis = null;
+            }
+            msgSendThread = null;
+            msgListenThread = null;
+            System.gc();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void closeMessage() {
+        if (isConnected()) {
+            if (this.messageListenerHandle != null)
+                this.messageListenerHandle.onDisconnected();
+            close();
+        }
+    }
+}
