@@ -6,7 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class ClientEntry {
+public class ClientConnect {
     public Socket sc;
     public DataInputStream dis;
     public DataOutputStream dos;
@@ -63,7 +63,7 @@ public class ClientEntry {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-            System.out.println("Error read message from client " + ClientEntry.this);
+            System.out.println("Error read message from client " + ClientConnect.this);
             if (isConnected()) {
                 if (messageListenerHandle != null) {
                     messageListenerHandle.onDisconnected();
@@ -73,9 +73,11 @@ public class ClientEntry {
         }
     }
 
-    public ClientEntry(Socket sc, int id) throws IOException {
+    public ClientConnect(Socket sc, int id) throws IOException {
         this.sc = sc;
         this.id = id;
+        this.dis = new DataInputStream(sc.getInputStream());
+        this.dos = new DataOutputStream(sc.getOutputStream());
         msgListenThread = new Thread(new MessageListener());
         msgListenThread.start();
         msgSendThread = new Thread(msgSender = new MessageSender());
