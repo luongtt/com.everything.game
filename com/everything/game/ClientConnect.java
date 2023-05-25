@@ -6,7 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class ClientConnect {
+public abstract class ClientConnect {
     public Socket sc;
     public DataInputStream dis;
     public DataOutputStream dos;
@@ -99,10 +99,8 @@ public class ClientConnect {
         this.msgSender.AddMessage(msg);
     }
 
-    protected synchronized void doSendMessage(Message m) throws Exception {}
-    protected synchronized Message doGetMessage() {
-        return null;
-    }
+    protected abstract void doSendMessage(Message m);
+    protected abstract Message doGetMessage();
 
     public void close() {
         cleanNetwork();
