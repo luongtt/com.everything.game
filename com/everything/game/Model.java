@@ -158,6 +158,7 @@ public class Model {
             Object value = resultSet.getObject(i);
             resultMap.put(columnName, value);
         }
+        resultSet.close();
         return resultMap;
     }
 
