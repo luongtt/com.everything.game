@@ -63,13 +63,12 @@ public abstract class ClientConnect {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-            System.out.println("Error read message from client " + ClientConnect.this);
             if (isConnected()) {
                 if (messageListenerHandle != null) {
                     messageListenerHandle.onDisconnected();
                 }
-                close();
             }
+            close();
         }
     }
 
@@ -107,7 +106,6 @@ public abstract class ClientConnect {
     }
 
     private void cleanNetwork() {
-        this.crypto.refresh();
         try {
             connected = false;
             if (sc != null) {
@@ -122,6 +120,7 @@ public abstract class ClientConnect {
                 dis.close();
                 dis = null;
             }
+            crypto = null;
             msgSendThread = null;
             msgListenThread = null;
             System.gc();
