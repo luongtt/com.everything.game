@@ -46,6 +46,13 @@ public abstract class ClientConnect {
                 e.printStackTrace();
             }
         }
+
+       private void doSendMessage(Message m) throws IOException {
+            byte msg[] = crypto.encrypt(m);
+            dos.write(msg);
+            dos.flush();
+            m.cleanup();
+       }
     }
 
     protected class MessageListener implements Runnable {
@@ -70,11 +77,16 @@ public abstract class ClientConnect {
             }
             close();
         }
+
+        private Message doGetMessage() {
+            return crypto.decrypt(dis);
+        }
     }
 
-    public ClientConnect(Socket sc, int id) throws IOException {
+    public ClientConnect(Socket sc, int id, ICrypto crypto) throws IOException {
         this.sc = sc;
         this.id = id;
+        this.crypto = crypto;
         this.dis = new DataInputStream(sc.getInputStream());
         this.dos = new DataOutputStream(sc.getOutputStream());
         msgListenThread = new Thread(new MessageListener());
@@ -86,20 +98,21 @@ public abstract class ClientConnect {
         return connected;
     }
 
-    public void setMessageListenerHandle(IMessageListener messageListener) {
-        this.messageListenerHandle = messageListener;
+    public void setConnected(boolean connected) {
+        this.connected = connected;
     }
 
-    public void setCrypto(ICrypto crypto) {
-        this.crypto = crypto;
+    public void setMessageListenerHandle(IMessageListener messageListener) {
+        this.messageListenerHandle = messageListener;
     }
 
     public void sendMessage(Message msg) {
         this.msgSender.AddMessage(msg);
     }
 
-    protected abstract void doSendMessage(Message m);
-    protected abstract Message doGetMessage();
+    public void startSender() {
+        this.msgSendThread.start();
+    }
 
     public void close() {
         cleanNetwork();
