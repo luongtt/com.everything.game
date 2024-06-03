@@ -11,7 +11,7 @@ public abstract class ClientConnect {
     public DataInputStream dis;
     public DataOutputStream dos;
     public int id;
-    protected boolean connected;
+    protected boolean connected = true;
     private IMessageListener messageListenerHandle;
     private Thread msgListenThread;
     protected Thread msgSendThread;
@@ -59,7 +59,7 @@ public abstract class ClientConnect {
         @Override
         public void run() {
             try {
-                while (true) {
+                while (isConnected()) {
                     Message message = doGetMessage();
                     if (message != null) {
                         messageListenerHandle.onMessage(message);
@@ -96,10 +96,6 @@ public abstract class ClientConnect {
 
     public boolean isConnected() {
         return connected;
-    }
-
-    public void setConnected(boolean connected) {
-        this.connected = connected;
     }
 
     public void setMessageListenerHandle(IMessageListener messageListener) {
