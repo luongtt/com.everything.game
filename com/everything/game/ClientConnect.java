@@ -90,7 +90,6 @@ public abstract class ClientConnect {
         this.dis = new DataInputStream(sc.getInputStream());
         this.dos = new DataOutputStream(sc.getOutputStream());
         msgListenThread = new Thread(new MessageListener());
-        msgListenThread.start();
         msgSendThread = new Thread(msgSender = new MessageSender());
     }
 
@@ -104,6 +103,10 @@ public abstract class ClientConnect {
 
     public void sendMessage(Message msg) {
         this.msgSender.AddMessage(msg);
+    }
+
+    public void startListener() {
+        this.msgListenThread.start();
     }
 
     public void startSender() {
