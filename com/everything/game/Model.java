@@ -101,19 +101,29 @@ public class Model {
         }
     }
 
+    /**
+     * Updates records in the database table with the provided data.
+     *
+     * @param data A Map representing the data to be updated.
+     *             The keys are column names, and the values are the new values for those columns.
+     * @return The number of rows affected by the update operation.
+     */
     public int update(Map<String, Object> data) {
         try {
             String updateQuery = String.format("UPDATE %s SET ", this.table);
-            ArrayList<String> dataUpdate = new ArrayList<String>();
+            ArrayList<String> keysUpdate = new ArrayList<String>();
+            int updatePos = 0;
             for (Map.Entry<String, Object> entry : data.entrySet()) {
-                String key = entry.getKey();
-                Object values = entry.getValue();
-                dataUpdate.add(key + "=" + values);
+                keysUpdate.add(entry.getKey() + " = ?");
+                Object value = entry.getValue();
+                this.parameters.add(updatePos++, value);
             }
-            updateQuery += String.join(",", dataUpdate);
+            updateQuery += String.join(",", keysUpdate);
             String query = this.makeQuery(updateQuery);
+            PreparedStatement statement = MySQLManager.conn.prepareStatement(query);
+            this.setParameter(statement);
             this.cleanQuery();
-            return MySQLManager.stat.executeUpdate(query);
+            return statement.executeUpdate();
         } catch(Exception e) {
             e.printStackTrace();
             return 0;
