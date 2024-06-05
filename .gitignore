@@ -35,3 +35,4 @@ bin/
 *.lock
 
 *.sh
+!build.sh
